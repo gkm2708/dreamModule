@@ -6,7 +6,7 @@ from gym_unity.envs.unity_env import UnityEnv
 
 def sampleTrajectory():
 
-    action_repeat = 150
+    action_repeat = 60
     action_range_around_zero = 10 # should be even
     period = 1
 
