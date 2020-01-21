@@ -6,7 +6,7 @@ from gym_unity.envs.unity_env import UnityEnv
 
 def sampleTrajectory():
 
-    action_repeat = 60
+    action_repeat = 1500
     action_range_around_zero = 10 # should be even
     period = 1
 
@@ -14,10 +14,8 @@ def sampleTrajectory():
         return False
 
     env = UnityEnv(
-        "/homes/gkumar/Documents/UnityProjects/mazeContinuousTarget_fixed_camera/Build/mazeContinuousTarget_fixed_camera_blank_board",
-        0,
-        use_visual=True,
-        uint8_visual=True)
+        "/homes/gkumar/Documents/UnityProjects/mazeContinuousTarget_fixed_camera_data_collection/Build/mazeContinuousTarget_fixed_camera_data_collection",
+        0, use_visual=True, uint8_visual=True)
 
     list_of_data = []
 
@@ -31,8 +29,10 @@ def sampleTrajectory():
                     obs_fovea = env.reset()
                     obs_fovea_next, reward, done, info = env.step([[i], [j], [k], [l]])
 
+                    # action
                     single_tuple[0] = i
                     single_tuple[1] = j
+                    # velocity
                     single_tuple[2] = k
                     single_tuple[3] = l
 
@@ -45,6 +45,7 @@ def sampleTrajectory():
                         y_vel_new = info["brain_info"].vector_observations[0][7]
 
                         obs_fovea_next, reward, done, info = env.step([[i], [j], [x_vel_new], [y_vel_new]])
+                        #obs_fovea_next, reward, done, info = env.step([[1], [1], [0], [0]])
 
                     list_of_data.append(single_tuple)
 
