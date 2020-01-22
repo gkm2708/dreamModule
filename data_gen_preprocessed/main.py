@@ -44,58 +44,88 @@ def buildLookupTable():
 
     data = readTrajectory()
 
+    collectionDict = {}
+
+
+    # group all records for one velocity
+
+    for init_vel in data:
+
+        if str(int(init_vel[2]))+","+str(int(init_vel[3])) in collectionDict.keys():
+            collectionDict_local = {}
+
+            collectionDict_local = collectionDict[str(int(init_vel[2]))+","+str(int(init_vel[3]))].copy()
+
+            collectionDict_local[str(int(init_vel[0]))+","+str(int(init_vel[1]))] = init_vel[4:]
+
+            collectionDict[str(int(init_vel[2]))+","+str(int(init_vel[3]))] = collectionDict_local
+
+            #print("Done", str(int(item[0]))+","+str(int(item[1])), str(int(item[2]))+","+str(int(item[3])))
+        else:
+            collectionDict_local = {}
+            collectionDict_local[str(int(init_vel[0]))+","+str(int(init_vel[1]))] = init_vel[4:]
+            collectionDict[str(int(init_vel[2]))+","+str(int(init_vel[3]))] = collectionDict_local
+
+
     lookupDict = {}
 
-    for item in data:
 
-        for point in range(end_point):
+    for init_vel in collectionDict:
 
-            pos_x = item[3 + point*2 +1]
-            pos_y = item[3 + point*2 +2]
+        for init_act in collectionDict[init_vel]:
 
-            pos_x, pos_y = centered_roundOff(pos_x, pos_y)
+            for point in range(end_point):
 
+                pos_x = collectionDict[init_vel][init_act][point*2 +0]
+                pos_y = collectionDict[init_vel][init_act][point*2 +1]
 
-
-
-            # if record already there then get it for update
-            if str(int(item[2]))+","+str(int(item[3])) in lookupDict.keys():
-
-                lookupRecord = lookupDict[str(int(item[2]))+","+str(int(item[3]))]
-
-            # else create new
-            else:
-
-                lookupRecord = np.zeros((9, 9, 2))
+                pos_x, pos_y = centered_roundOff(pos_x, pos_y)
 
 
+                if -4 <= pos_x <= 4 and -4 <= pos_y <= 4:
 
+                    # if record already there then get it for update
+                    if init_vel in lookupDict.keys():
 
-            # if the action to reach a cell is (0,0) then update it directly
-            if lookupRecord[pos_x][pos_y][0] == 0 and lookupRecord[pos_x][pos_y][1] == 0:
+                        lookupRecord = lookupDict[init_vel]
 
-                lookupRecord[pos_x][pos_y][0] = item[0]
-                lookupRecord[pos_x][pos_y][1] = item[1]
+                    # else create new
+                    else:
 
-            # else find the distance of this velocity to current velocity
-            # and new velocity
-            # if new velocity has less distance
-            # replace else leave it
-            else:
-
-                dist_saved = math.sqrt( ( math.pow(lookupRecord[pos_x][pos_y][0] - item[2], 2)
-                                          + math.pow(lookupRecord[pos_x][pos_y][1] - item[3], 2) ) )
-
-                dist_new = math.sqrt( ( math.pow(item[0] - item[2], 2) + math.pow(item[1] - item[3], 2) ) )
-
-                if dist_saved > dist_new:
-                    lookupRecord[pos_x][pos_y][0] = item[0]
-                    lookupRecord[pos_x][pos_y][1] = item[1]
+                        lookupRecord = np.zeros((9, 9, 2))
 
 
 
+                    init_act_xy = init_act.split(",")
+                    init_vel_xy = init_vel.split(",")
 
-            lookupDict[str(int(item[2]))+","+str(int(item[3]))] = lookupRecord
+
+                    # if the action to reach a cell is (0,0) then update it directly
+                    if lookupRecord[pos_x+4][pos_y+4][0] == 0 and lookupRecord[pos_x+4][pos_y+4][1] == 0:
+
+                        lookupRecord[pos_x+4][pos_y+4][0] = int(init_act_xy[0])
+                        lookupRecord[pos_x+4][pos_y+4][1] = int(init_act_xy[1])
+
+                    # else find the distance of this velocity to current velocity
+                    # and new velocity
+                    # if new velocity has less distance
+                    # replace else leave it
+                    else:
+
+                        dist_saved = math.sqrt( ( math.pow(lookupRecord[pos_x+4][pos_y+4][0] - int(init_vel_xy[0]), 2)
+                                                  + math.pow(lookupRecord[pos_x+4][pos_y+4][1] - int(init_vel_xy[1]), 2) ) )
+
+                        dist_new = math.sqrt( ( math.pow(int(init_act_xy[0]) - int(init_vel_xy[0]), 2) +
+                                                math.pow(int(init_act_xy[1]) - int(init_vel_xy[1]), 2) ) )
+
+                        if dist_saved > dist_new:
+                            lookupRecord[pos_x+4][pos_y+4][0] = int(init_act_xy[0])
+                            lookupRecord[pos_x+4][pos_y+4][1] = int(init_act_xy[1])
+
+
+
+
+                    lookupDict[init_vel] = lookupRecord
 
 
 
@@ -116,88 +146,6 @@ def buildLookupTable():
     h5f = h5py.File(lookupfile, 'w')
     h5f.create_dataset('dataset_1', data=list_of_data)
     h5f.close()
-
-
-
-
-
-def buildLookupTable1():
-
-    data = readTrajectory()
-
-    lookupDict = {}
-
-    for item in data:
-
-        for point in range(end_point):
-
-            pos_x = item[3 + point*2 +1]
-            pos_y = item[3 + point*2 +2]
-
-            pos_x, pos_y = centered_roundOff(pos_x, pos_y)
-
-
-
-
-            # if record already there then get it for update
-            if str(int(item[0]))+","+str(int(item[1])) in lookupDict.keys():
-
-                lookupRecord = lookupDict[str(int(item[0]))+","+str(int(item[1]))]
-
-            # else create new
-            else:
-
-                lookupRecord = np.zeros((9, 9, 2))
-
-
-
-
-            # if the action to reach a cell is (0,0) then update it directly
-            if lookupRecord[pos_x][pos_y][0] == 0 and lookupRecord[pos_x][pos_y][1] == 0:
-
-                lookupRecord[pos_x][pos_y][0] = item[2]
-                lookupRecord[pos_x][pos_y][1] = item[3]
-
-            # else find the distance of this velocity to current velocity
-            # and new velocity
-            # if new velocity has less distance
-            # replace else leave it
-            else:
-
-                dist_saved = math.sqrt( ( math.pow(lookupRecord[pos_x][pos_y][0] - item[0], 2)
-                                          + math.pow(lookupRecord[pos_x][pos_y][1] - item[1], 2) ) )
-
-                dist_new = math.sqrt( ( math.pow(item[2] - item[0], 2) + math.pow(item[3] - item[1], 2) ) )
-
-                if dist_saved > dist_new:
-                    lookupRecord[pos_x][pos_y][0] = item[2]
-                    lookupRecord[pos_x][pos_y][1] = item[3]
-
-
-
-
-            lookupDict[str(int(item[0]))+","+str(int(item[1]))] = lookupRecord
-
-
-
-
-    list_of_data = np.zeros((len(lookupDict.keys()),9*9+1, 2))
-
-
-
-
-
-    for i, key in enumerate(lookupDict):
-        #print(i, key)
-        keys = key.split(",")
-        list_of_data[i][0][0] = keys[0]
-        list_of_data[i][0][1] = keys[1]
-        list_of_data[i][1:] = np.reshape(lookupDict[key],(81,2))
-
-    h5f = h5py.File(lookupfile1, 'w')
-    h5f.create_dataset('dataset_1', data=list_of_data)
-    h5f.close()
-
 
 
 
@@ -236,8 +184,5 @@ def centered_roundOff(pos_x, pos_y):
 
 if __name__ == '__main__':
 
-    #if not os.path.exists(lookupfile):
-    #    buildLookupTable()
-
-    if not os.path.exists(lookupfile1):
-        buildLookupTable1()
+    if not os.path.exists(lookupfile):
+        buildLookupTable()
